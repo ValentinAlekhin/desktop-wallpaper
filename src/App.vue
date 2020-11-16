@@ -3,6 +3,7 @@
     <div class="top">
       <span class="time">{{ time }}</span>
       <div class="about_weather">
+        <i class="wi about_icon" :class="weatherIcon" />
         <span class="about_text">{{ aboutText }}</span>
       </div>
     </div>
@@ -13,13 +14,14 @@
         <span class="city">{{ `${city}, ${code}` }}</span>
       </div>
 
-      <span class="temp">{{ temp + '&deg C' }}</span>
+      <span class="temp">{{ temp }}&degC</span>
     </div>
   </div>
 </template>
 
 <script>
 import moment from 'moment'
+import './scss/style.scss'
 import { getLocation, getWeather } from './api/api'
 
 import LocationIcon from './icons/location'
@@ -35,6 +37,7 @@ export default {
       city: '',
       code: '',
       temp: '',
+      weatherIcon: '',
       time: moment().format('HH:mm'),
     }
   },
@@ -44,9 +47,45 @@ export default {
       this.time = moment().format('HH:mm')
     },
 
+    setWeatherIcon(id) {
+      let className = 'wi-'
+
+      const time = Number.parseInt(moment().format('HH'))
+      if (time >= 21 || time <= 5) {
+        className += 'night-'
+      } else className += 'day-'
+
+      switch (id.toString()[0]) {
+        case '2':
+          className += 'thunderstorm'
+          break
+        case '3':
+          className += 'sprinkle'
+          break
+        case '5':
+          className += 'rain'
+          break
+        case '6':
+          className += 'snow'
+          break
+        case '7':
+          className += 'fog'
+          break
+        case '8':
+          if (id.toString()[2] === '0') {
+            className += 'clear'
+          } else className += 'cloudy'
+          break
+      }
+
+      this.weatherIcon = className
+    },
+
     async setLoacationAndWeather() {
       const { city, country_code, longitude, latitude } = await getLocation()
       const { desc, temp, weatherId } = await getWeather(latitude, longitude)
+
+      this.setWeatherIcon(weatherId)
 
       this.city = city
       this.code = country_code
@@ -58,7 +97,7 @@ export default {
   created() {
     this.setLoacationAndWeather()
     setInterval(this.setTime, 1000)
-    // setInterval(this.setLoacationAndWeather, 60 * 60 * 60)
+    setInterval(this.setLoacationAndWeather, 60 * 60 * 60)
   },
 }
 </script>
@@ -93,6 +132,7 @@ body {
       font-size: 150px;
       line-height: 72%;
       font-weight: 200;
+      margin-right: 20px;
     }
 
     .about_weather {
@@ -100,6 +140,15 @@ body {
       flex-direction: column;
       justify-content: space-between;
       text-align: center;
+
+      .about_icon:before {
+        font-size: 40px;
+      }
+
+      .about_text {
+        font-size: 32px;
+        text-transform: lowercase;
+      }
     }
   }
 
@@ -121,7 +170,7 @@ body {
         height: 30px;
         width: 30px;
         fill: $accent_color;
-        margin-right: 10px;
+        margin-right: 20px;
       }
     }
   }
